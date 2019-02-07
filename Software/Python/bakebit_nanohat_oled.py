@@ -63,7 +63,7 @@ oled.setNormalDisplay()      #Set display to normal mode (i.e non-inverse mode)
 oled.setHorizontalMode()
 
 global lastPressed
-lastPressed = 0
+lastPressed = time.time()
 global screenOffInterval
 screenOffInterval = 60
 
