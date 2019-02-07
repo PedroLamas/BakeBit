@@ -54,13 +54,18 @@ height=64
 global pageCount
 pageCount=2
 global pageIndex
-pageIndex=0
+pageIndex=1
 global showPageIndicator
 showPageIndicator=False
 
 oled.init()  #initialze SEEED OLED display
 oled.setNormalDisplay()      #Set display to normal mode (i.e non-inverse mode)
 oled.setHorizontalMode()
+
+global lastPressed
+lastPressed = 0
+global screenOffInterval
+screenOffInterval = 60
 
 global drawing 
 drawing = False
@@ -154,7 +159,7 @@ def draw_page():
         bottom = height-padding
         # Move left to right keeping track of the current x position for drawing shapes.
         x = 0
-	IPAddress = get_ip()
+        IPAddress = get_ip()
         cmd = "top -bn1 | grep load | awk '{printf \"CPU Load: %.2f\", $(NF-2)}'"
         CPU = subprocess.check_output(cmd, shell = True )
         cmd = "free -m | awk 'NR==2{printf \"Mem: %s/%sMB %.2f%%\", $3,$2,$3*100/$2 }'"
@@ -218,6 +223,7 @@ def update_page_index(pi):
 
 def receive_signal(signum, stack):
     global pageIndex
+    global lastPressed
 
     lock.acquire()
     page_index = pageIndex
@@ -225,6 +231,8 @@ def receive_signal(signum, stack):
 
     if page_index==5:
         return
+    
+    lastPressed = time.time()
 
     if signum == signal.SIGUSR1:
         print 'K1 pressed'
@@ -272,6 +280,11 @@ signal.signal(signal.SIGALRM, receive_signal)
 
 while True:
     try:
+        if lastPressed:
+           if time.time() - lastPressed > screenOffInterval:
+               lastPressed = 0
+               update_page_index(6)
+        
         draw_page()
 
         lock.acquire()
@@ -297,7 +310,7 @@ while True:
             os.system('systemctl poweroff')
             break
         time.sleep(1)
-    except KeyboardInterrupt:                                                                                                          
-        break                     
-    except IOError:                                                                              
+    except KeyboardInterrupt:
+        break
+    except IOError:
         print ("Error")
