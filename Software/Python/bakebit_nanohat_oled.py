@@ -281,34 +281,34 @@ signal.signal(signal.SIGALRM, receive_signal)
 while True:
     try:
         if lastPressed:
-           if time.time() - lastPressed > screenOffInterval:
-               lastPressed = 0
-               update_page_index(6)
-        
-        draw_page()
+            if time.time() - lastPressed > screenOffInterval:
+                lastPressed = 0
+                update_page_index(6)
 
-        lock.acquire()
-        page_index = pageIndex
-        lock.release()
+            draw_page()
 
-        if page_index==5:
-            time.sleep(2)
-            while True:
-                lock.acquire()
-                is_drawing = drawing
-                lock.release()
-                if not is_drawing:
+            lock.acquire()
+            page_index = pageIndex
+            lock.release()
+
+            if page_index==5:
+                time.sleep(2)
+                while True:
                     lock.acquire()
-                    drawing = True
+                    is_drawing = drawing
                     lock.release()
-                    oled.clearDisplay()
-                    break
-                else:
-                    time.sleep(.1)
-                    continue
-            time.sleep(1)
-            os.system('systemctl poweroff')
-            break
+                    if not is_drawing:
+                        lock.acquire()
+                        drawing = True
+                        lock.release()
+                        oled.clearDisplay()
+                        break
+                    else:
+                        time.sleep(.1)
+                        continue
+                time.sleep(1)
+                os.system('systemctl poweroff')
+                break
         time.sleep(1)
     except KeyboardInterrupt:
         break
